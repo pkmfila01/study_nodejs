@@ -1,5 +1,6 @@
 var express = require('express');
 var OrientDB = require('orientjs');
+var bodyParser = require("body-parser");
 var server = OrientDB({
    host:       'localhost',
    port:       2424,
@@ -12,6 +13,7 @@ var app = express();
 
 app.set('view engine', 'jade');
 app.set('views', './views');
+app.use(bodyParser.urlencoded({ extended: true }));
 
 app.get('/topic/add', function(req, res){
     var sql = 'select from topic';
@@ -21,6 +23,24 @@ app.get('/topic/add', function(req, res){
             res.status(500).send('Internal Server Error');
         }
         res.render('add', {topics:topics});
+    });
+});
+
+app.post('/topic/add', function(req, res){
+    console.log(req.body);
+    
+    var title = req.body.title;
+    var description = req.body.description;
+    var author = req.body.author;
+    var sql = "insert into topic(title, description, author) values(:title, :desc, :author)";
+    db.query(sql, {
+        params:{
+            title:title,
+            desc:description,
+            author:author
+        }
+    }).then(function(results){
+        res.redirect('/topic/' + encodeURIComponent(results[0]['@rid']));
     });
 });
 
